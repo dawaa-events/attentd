@@ -38,6 +38,8 @@ create table if not exists public.cards (
   created_at timestamptz not null default now()
 );
 
+alter table public.cards add column if not exists note text check (char_length(note) <= 500);
+
 alter table public.cards enable row level security;
 
 drop policy if exists "signed in users can view cards" on public.cards;

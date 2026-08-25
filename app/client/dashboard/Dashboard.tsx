@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 type Attendee = { id: string; name: string; guests_count: number; phone: string; created_at: string };
-type Card = { id: string; order_number: number; code: string; attendee_id: string | null; reserved_at: string | null };
+type Card = { id: string; order_number: number; code: string; attendee_id: string | null; reserved_at: string | null; note: string | null };
 
 export default function Dashboard() {
   const router = useRouter();
@@ -11,6 +11,9 @@ export default function Dashboard() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
   const instructions = process.env.NEXT_PUBLIC_CARD_MESSAGE || "مرحباً، نرسل لكم بطاقة الدخول الخاصة بالمناسبة. يرجى الاحتفاظ بها وإبرازها عند الدخول.";
 
   async function load() {
@@ -53,6 +56,19 @@ export default function Dashboard() {
     } finally { setSendingId(null); }
   }
 
+  async function saveNote(card: Card) {
+    setSavingNoteId(card.id);
+    const response = await fetch("/api/cards", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: card.id, note: noteDraft }),
+    });
+    const data = await response.json();
+    setSavingNoteId(null);
+    if (!response.ok) return alert(data.error || "تعذر حفظ الملاحظة");
+    setCards(current => current.map(item => item.id === card.id ? data : item));
+    setEditingNoteId(null); setNoteDraft("");
+  }
+
   return <main className="client-page"><div className="client-wrap">
     <header className="client-header"><div className="client-logo"><div className="logo-wrap logo-compact"><img src="/dawaa-logo.png" alt="شعار دعوة" /></div><div><h1>صفحة العميل</h1><p>إدارة الحضور وبطاقات الدخول</p></div></div><form action="/api/logout" method="post"><button className="logout-link">تسجيل الخروج</button></form></header>
     <section className="stats"><article className="stat"><small>عدد الراغبين بالحضور</small><strong>{totalGuests}</strong></article><article className="stat"><small>البطاقات المتوفرة</small><strong>{available.length}</strong></article><article className="stat"><small>البطاقات المحجوزة</small><strong>{reserved.length}</strong></article></section>
@@ -65,8 +81,8 @@ export default function Dashboard() {
       </tbody></table></div>
     </section>
     <section className="panel cards-panel"><div className="panel-tools"><div><h2>قائمة بطاقات الدخول</h2><p>تحديث مباشر لحالة البطاقات المحجوزة والمتوفرة</p></div><span className="inventory-count">{available.length} متوفرة</span></div>
-      <div className="table-scroll"><table><thead><tr><th>رقم الترتيب</th><th>الكود</th><th>الحالة</th></tr></thead><tbody>
-        {cards.length === 0 ? <tr><td colSpan={3} className="empty-state">لم تضف الإدارة بطاقات حتى الآن</td></tr> : cards.map(card => <tr key={card.id}><td>{card.order_number}</td><td><strong className="card-code">{card.code}</strong></td><td><span className={card.attendee_id ? "status reserved" : "status available"}>{card.attendee_id ? "محجوزة" : "متوفرة"}</span></td></tr>)}
+      <div className="table-scroll"><table><thead><tr><th>رقم الترتيب</th><th>الكود</th><th>الحالة</th><th>الملاحظة</th></tr></thead><tbody>
+        {cards.length === 0 ? <tr><td colSpan={4} className="empty-state">لم تضف الإدارة بطاقات حتى الآن</td></tr> : cards.map(card => <tr key={card.id}><td>{card.order_number}</td><td><strong className="card-code">{card.code}</strong></td><td><span className={card.attendee_id ? "status reserved" : "status available"}>{card.attendee_id ? "محجوزة" : "متوفرة"}</span></td><td>{editingNoteId === card.id ? <div className="note-editor"><textarea value={noteDraft} onChange={event => setNoteDraft(event.target.value)} maxLength={500} autoFocus placeholder="اكتب الملاحظة هنا..." /><div><button className="note-save" onClick={() => saveNote(card)} disabled={savingNoteId === card.id}>{savingNoteId === card.id ? "جاري الحفظ..." : "حفظ"}</button><button className="note-cancel" onClick={() => { setEditingNoteId(null); setNoteDraft(""); }}>إلغاء</button></div></div> : <div className="note-cell">{card.note && <span>{card.note}</span>}<button className="note-button" onClick={() => { setEditingNoteId(card.id); setNoteDraft(card.note || ""); }}>{card.note ? "تعديل الملاحظة" : "كتابة ملاحظة"}</button></div>}</td></tr>)}
       </tbody></table></div>
     </section>
   </div></main>;

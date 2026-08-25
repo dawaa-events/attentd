@@ -2,7 +2,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 type Attendee = { id: string; name: string; guests_count: number; phone: string; created_at: string };
-type Card = { id: string; order_number: number; code: string; attendee_id: string | null; reserved_at: string | null };
+type Card = { id: string; order_number: number; code: string; attendee_id: string | null; reserved_at: string | null; note: string | null };
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -50,8 +50,8 @@ export default function AdminDashboard() {
         {attendees.length === 0 ? <p className="list-empty">لا توجد تسجيلات حتى الآن</p> : attendees.slice(0, 6).map(item => <article key={item.id}><div><strong>{item.name}</strong><small>+{item.phone}</small></div><b>{item.guests_count} حضور</b></article>)}
       </div></section>
     </section>
-    <section className="panel cards-panel"><div className="panel-tools"><div><h2>متابعة البطاقات</h2><p>المحجوز والمتبقي وربط كل بطاقة بالضيف</p></div><span className="inventory-count">{available.length} متوفرة</span></div><div className="table-scroll"><table><thead><tr><th>الترتيب</th><th>الكود</th><th>الحالة</th><th>محجوزة لـ</th></tr></thead><tbody>
-      {cards.length === 0 ? <tr><td colSpan={4} className="empty-state">لم تتم إضافة أكواد بعد</td></tr> : cards.map(card => <tr key={card.id}><td>{card.order_number}</td><td><strong className="card-code">{card.code}</strong></td><td><span className={card.attendee_id ? "status reserved" : "status available"}>{card.attendee_id ? "محجوزة" : "متوفرة"}</span></td><td>{card.attendee_id ? attendeeById.get(card.attendee_id)?.name || "ضيف" : "—"}</td></tr>)}
+    <section className="panel cards-panel"><div className="panel-tools"><div><h2>متابعة البطاقات</h2><p>المحجوز والمتبقي وربط كل بطاقة بالضيف</p></div><span className="inventory-count">{available.length} متوفرة</span></div><div className="table-scroll"><table><thead><tr><th>الترتيب</th><th>الكود</th><th>الحالة</th><th>محجوزة لـ</th><th>ملاحظة العميل</th></tr></thead><tbody>
+      {cards.length === 0 ? <tr><td colSpan={5} className="empty-state">لم تتم إضافة أكواد بعد</td></tr> : cards.map(card => <tr key={card.id}><td>{card.order_number}</td><td><strong className="card-code">{card.code}</strong></td><td><span className={card.attendee_id ? "status reserved" : "status available"}>{card.attendee_id ? "محجوزة" : "متوفرة"}</span></td><td>{card.attendee_id ? attendeeById.get(card.attendee_id)?.name || "ضيف" : "—"}</td><td className="admin-note">{card.note || "—"}</td></tr>)}
     </tbody></table></div></section>
   </div></main>;
 }
