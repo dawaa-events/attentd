@@ -50,8 +50,9 @@ export default function Dashboard() {
       const codes = assigned.map(card => `• ${card.order_number} - ${card.code}`).join("\n");
       const cardDetails = codes ? `\n\nبطاقات الدخول المخصصة لكم:\n${codes}` : "";
       const message = `الفاضلة/ ${row.name}\n\n${instructions}${cardDetails}`;
-      const link = `https://api.whatsapp.com/send?phone=${row.phone}&text=${encodeURIComponent(message)}`;
-      if (popup) popup.location.href = link; else window.location.href = link;
+      const cleanPhone = row.phone.replace(/\D/g, "");
+      const link = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+      if (popup && !popup.closed) popup.location.replace(link); else window.location.assign(link);
     } catch (error) {
       if (popup) popup.close();
       alert(error instanceof Error ? error.message : "تعذر إرسال البطاقة");
