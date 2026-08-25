@@ -21,3 +21,11 @@ export async function supabaseAuth(path: string, init: RequestInit = {}) {
   headers.set("Content-Type", "application/json");
   return fetch(`${url}/auth/v1${path}`, { ...init, headers, cache: "no-store" });
 }
+
+export async function getSupabaseUser(accessToken: string) {
+  const response = await supabaseAuth("/user", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) return null;
+  return response.json() as Promise<{ id: string; email?: string }>;
+}

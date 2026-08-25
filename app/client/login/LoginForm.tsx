@@ -8,7 +8,7 @@ export default function LoginForm() {
     const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("email"), password: form.get("password") }) });
     const data = await res.json(); setLoading(false);
     if (!res.ok) return setError(data.error || "تعذر تسجيل الدخول");
-    router.push(data.demo ? "/client/dashboard?demo=1" : "/client/dashboard"); router.refresh();
+    router.push("/client/dashboard"); router.refresh();
   }
   return <form onSubmit={submit}>
     <label><span>البريد الإلكتروني</span><input name="email" type="email" required autoComplete="email" placeholder="name@example.com" /></label>
