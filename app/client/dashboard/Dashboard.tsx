@@ -40,14 +40,16 @@ export default function Dashboard() {
         body: JSON.stringify({ attendeeId: row.id, count: row.guests_count }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "تعذر حجز البطاقة");
-      const assigned = data as Card[];
-      setCards(current => {
+      const noCardsAvailable = response.status === 409 && String(data.error || "").includes("بطاقات");
+      if (!response.ok && !noCardsAvailable) throw new Error(data.error || "تعذر حجز البطاقة");
+      const assigned = response.ok ? data as Card[] : [];
+      if (assigned.length) setCards(current => {
         const assignedById = new Map(assigned.map(card => [card.id, card]));
         return current.map(card => assignedById.get(card.id) || card);
       });
       const codes = assigned.map(card => `• ${card.order_number} - ${card.code}`).join("\n");
-      const message = `الفاضلة/ ${row.name}\n\n${instructions}\n\nبطاقات الدخول المخصصة لكم:\n${codes}`;
+      const cardDetails = codes ? `\n\nبطاقات الدخول المخصصة لكم:\n${codes}` : "";
+      const message = `الفاضلة/ ${row.name}\n\n${instructions}${cardDetails}`;
       const link = `https://api.whatsapp.com/send?phone=${row.phone}&text=${encodeURIComponent(message)}`;
       if (popup) popup.location.href = link; else window.location.href = link;
     } catch (error) {
@@ -76,7 +78,7 @@ export default function Dashboard() {
       <div className="table-scroll"><table><thead><tr><th>#</th><th>الاسم</th><th>عدد الحضور</th><th>رقم الهاتف</th><th>وقت التسجيل</th><th>الإجراء</th></tr></thead><tbody>
         {loading ? <tr><td colSpan={6} className="empty-state">جاري تحميل القائمة...</td></tr> : filtered.length === 0 ? <tr><td colSpan={6} className="empty-state">لا توجد تسجيلات حتى الآن</td></tr> : filtered.map((row, index) => {
           const hasCards = cards.some(card => card.attendee_id === row.id);
-          return <tr key={row.id}><td className="row-number">{index + 1}</td><td><strong>{row.name}</strong></td><td>{row.guests_count}</td><td><a className="phone-link" href={`tel:+${row.phone}`}>+{row.phone}</a></td><td>{new Date(row.created_at).toLocaleString("ar-OM", { dateStyle: "short", timeStyle: "short" })}</td><td><button className="send-card" onClick={() => reserveAndSend(row)} disabled={sendingId === row.id}>{sendingId === row.id ? "جاري الحجز..." : hasCards ? "إرسال البطاقة ↖" : "حجز وإرسال ↖"}</button></td></tr>;
+          return <tr key={row.id}><td className="row-number">{index + 1}</td><td><strong>{row.name}</strong></td><td>{row.guests_count}</td><td><a className="phone-link" href={`tel:+${row.phone}`}>+{row.phone}</a></td><td>{new Date(row.created_at).toLocaleString("ar-OM", { dateStyle: "short", timeStyle: "short" })}</td><td><button className="send-card" onClick={() => reserveAndSend(row)} disabled={sendingId === row.id}>{sendingId === row.id ? "جاري الفتح..." : hasCards ? "إرسال البطاقة ↖" : available.length ? "حجز وإرسال ↖" : "فتح واتساب ↖"}</button></td></tr>;
         })}
       </tbody></table></div>
     </section>
