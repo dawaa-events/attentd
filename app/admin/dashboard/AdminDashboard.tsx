@@ -2,7 +2,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 type Attendee = { id: string; name: string; guests_count: number; phone: string; created_at: string };
-type Card = { id: string; order_number: number; code: string; attendee_id: string | null; reserved_at: string | null; note: string | null };
+type Card = { id: string; order_number: number; code: string; attendee_id: string | null; reserved_at: string | null; manual_reserved: boolean; note: string | null };
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -47,8 +47,8 @@ export default function AdminDashboard() {
     setNotice(`تم استيراد ${data.count} بطاقة من الملف بنجاح`); setSheetFile(null); await load();
   }
 
-  const reserved = cards.filter(card => card.attendee_id);
-  const available = cards.filter(card => !card.attendee_id);
+  const reserved = cards.filter(card => card.attendee_id || card.manual_reserved);
+  const available = cards.filter(card => !card.attendee_id && !card.manual_reserved);
   const attendeeById = useMemo(() => new Map(attendees.map(item => [item.id, item])), [attendees]);
   return <main className="admin-page"><div className="admin-wrap">
     <header className="admin-hero"><div className="admin-brand"><div className="logo-wrap logo-compact"><img src="/dawaa-logo.png" alt="شعار دعوة" /></div><div><span>مركز تحكم دعوة</span><h1>لوحة الإدارة</h1><p>رفع الأكواد ومتابعة الحضور والبطاقات من مكان واحد</p></div></div><form action="/api/logout" method="post"><button className="admin-logout">تسجيل الخروج</button></form></header>
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
     </section>
     <details className="admin-manual"><summary>إضافة الأكواد يدويًا</summary><form className="codes-form" onSubmit={addCards}><textarea value={codesText} onChange={e => setCodesText(e.target.value)} required placeholder={"211, DAWAA-A1B2\n212, DAWAA-C3D4\n213, DAWAA-E5F6"} /><button className="admin-primary" disabled={saving}>{saving ? "جاري الإضافة..." : "إضافة البطاقات"}</button></form></details>
     <section className="admin-cards-panel"><div className="admin-table-heading"><div><span>03</span><h2>سجل البطاقات</h2><p>المحجوز والمتبقي وربط كل بطاقة بالضيف</p></div><b>{available.length} متوفرة</b></div><div className="table-scroll"><table><thead><tr><th>الترتيب</th><th>الكود</th><th>الحالة</th><th>محجوزة لـ</th><th>ملاحظة العميل</th></tr></thead><tbody>
-      {cards.length === 0 ? <tr><td colSpan={5} className="empty-state">لم تتم إضافة أكواد بعد</td></tr> : cards.map(card => <tr key={card.id}><td>{card.order_number}</td><td><strong className="card-code">{card.code}</strong></td><td><span className={card.attendee_id ? "status reserved" : "status available"}>{card.attendee_id ? "محجوزة" : "متوفرة"}</span></td><td>{card.attendee_id ? attendeeById.get(card.attendee_id)?.name || "ضيف" : "—"}</td><td className="admin-note">{card.note || "—"}</td></tr>)}
+      {cards.length === 0 ? <tr><td colSpan={5} className="empty-state">لم تتم إضافة أكواد بعد</td></tr> : cards.map(card => { const cardReserved = Boolean(card.attendee_id || card.manual_reserved); return <tr key={card.id}><td>{card.order_number}</td><td><strong className="card-code">{card.code}</strong></td><td><span className={cardReserved ? "status reserved" : "status available"}>{cardReserved ? "محجوزة" : "متوفرة"}</span></td><td>{card.attendee_id ? attendeeById.get(card.attendee_id)?.name || "ضيف" : card.manual_reserved ? "حجز يدوي" : "—"}</td><td className="admin-note">{card.note || "—"}</td></tr>; })}
     </tbody></table></div></section>
   </div></main>;
 }

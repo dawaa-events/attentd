@@ -12,7 +12,7 @@ async function session() {
 export async function GET() {
   const auth = await session();
   if (!auth) return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-  const response = await supabaseRest("/rest/v1/cards?select=id,order_number,code,attendee_id,reserved_at,note,created_at&order=order_number.asc", {}, auth.token);
+  const response = await supabaseRest("/rest/v1/cards?select=id,order_number,code,attendee_id,reserved_at,manual_reserved,note,created_at&order=order_number.asc", {}, auth.token);
   if (!response.ok) return NextResponse.json({ error: "تعذر تحميل البطاقات" }, { status: 500 });
   return NextResponse.json(await response.json());
 }
@@ -20,14 +20,19 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const auth = await session();
   if (!auth) return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-  const { id, note } = await request.json() as { id?: string; note?: string };
+  const { id, note, manualStatus } = await request.json() as { id?: string; note?: string; manualStatus?: "available" | "reserved" };
   const cleanedNote = String(note || "").trim();
   if (!id) return NextResponse.json({ error: "البطاقة غير محددة" }, { status: 400 });
-  if (cleanedNote.length > 500) return NextResponse.json({ error: "الملاحظة طويلة جدًا" }, { status: 400 });
+  if (!manualStatus && cleanedNote.length > 500) return NextResponse.json({ error: "الملاحظة طويلة جدًا" }, { status: 400 });
+  const changes = manualStatus === "reserved"
+    ? { manual_reserved: true }
+    : manualStatus === "available"
+      ? { manual_reserved: false, attendee_id: null, reserved_at: null }
+      : { note: cleanedNote || null };
   const response = await supabaseRest(`/rest/v1/cards?id=eq.${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { Prefer: "return=representation" },
-    body: JSON.stringify({ note: cleanedNote || null }),
+    body: JSON.stringify(changes),
   }, auth.token);
   if (!response.ok) return NextResponse.json({ error: "تعذر حفظ الملاحظة" }, { status: 500 });
   const updated = await response.json();

@@ -39,6 +39,7 @@ create table if not exists public.cards (
 );
 
 alter table public.cards add column if not exists note text check (char_length(note) <= 500);
+alter table public.cards add column if not exists manual_reserved boolean not null default false;
 
 alter table public.cards enable row level security;
 
@@ -55,7 +56,8 @@ create policy "signed in users can update cards"
 on public.cards for update to authenticated using (true) with check (true);
 
 create index if not exists cards_attendee_idx on public.cards (attendee_id);
-create index if not exists cards_available_idx on public.cards (order_number) where attendee_id is null;
+drop index if exists public.cards_available_idx;
+create index cards_available_idx on public.cards (order_number) where attendee_id is null and manual_reserved = false;
 
 create or replace function public.reserve_cards(target_attendee uuid, requested_count integer)
 returns setof public.cards
@@ -74,7 +76,7 @@ begin
   select count(*) into already_reserved from public.cards where attendee_id = target_attendee;
   needed := greatest(requested_count - already_reserved, 0);
 
-  if needed > (select count(*) from public.cards where attendee_id is null) then
+  if needed > (select count(*) from public.cards where attendee_id is null and manual_reserved = false) then
     raise exception 'Not enough available cards';
   end if;
 
@@ -83,7 +85,7 @@ begin
     set attendee_id = target_attendee, reserved_at = now()
     where id in (
       select id from public.cards
-      where attendee_id is null
+      where attendee_id is null and manual_reserved = false
       order by order_number
       for update skip locked
       limit needed
