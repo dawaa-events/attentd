@@ -43,7 +43,7 @@ export default function Home() {
             <p>يرجى تعبئة البيانات التالية بدقة لإصدار بطاقة الدخول.</p>
           </div>
           <RsvpForm />
-          <footer><span>بياناتكم محفوظة وآمنة</span><a href="/client/login">دخول العميل</a></footer>
+          <footer><span>بياناتكم محفوظة وآمنة</span><nav><a href="/client/login">دخول العميل</a><a href="/admin/login">دخول الإدارة</a></nav></footer>
         </section>
       </section>
     </main>
