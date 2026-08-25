@@ -1,7 +1,7 @@
 import RsvpForm from "./components/RsvpForm";
 
 const event = {
-  couple: process.env.EVENT_COUPLE_NAME || "حفل زفاف مريم و ...",
+  couple: process.env.EVENT_COUPLE_NAME || "عدنان ومريم",
   date: process.env.EVENT_DATE || "الخميس، 12 نوفمبر 2026",
   time: process.env.EVENT_TIME || "الثامنة مساءً",
   venue: process.env.EVENT_VENUE || "فندق JW ماريوت",
@@ -39,7 +39,7 @@ export default function Home() {
           <div className="mobile-logo"><Logo compact /><div><span>خدمة دعوة</span><small>لإدارة المعازيم</small></div></div>
           <div className="form-panel-heading">
             <span className="step-pill">تأكيد الحضور</span>
-            <h2>ننتظر حضوركم بكل شوق</h2>
+            <h2>ننتظر حضوركم بكل ود</h2>
             <p>يرجى تعبئة البيانات التالية بدقة لإصدار بطاقة الدخول.</p>
           </div>
           <RsvpForm />
