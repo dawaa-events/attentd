@@ -2,7 +2,7 @@ import RsvpForm from "./components/RsvpForm";
 
 const event = {
   couple: process.env.EVENT_COUPLE_NAME || "عدنان و مريم",
-  date: process.env.EVENT_DATE || "الخميس، 12 نوفمبر 2026",
+  date: process.env.EVENT_DATE || "الجمعة، 11 ديسمبر 2026",
   time: process.env.EVENT_TIME || "الثامنة مساءً",
   venue: process.env.EVENT_VENUE || "فندق JW ماريوت",
 };
